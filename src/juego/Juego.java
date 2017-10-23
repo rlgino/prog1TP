@@ -138,7 +138,7 @@ public class Juego extends InterfaceJuego {
 					seMovio = false;
 				} else if (!barril.llegoTopeDer(viga) && !volverBarril) {
 					seMovio = true;
-					barril.moverse(3);
+					barril.moverse(2);
 					break;
 				}
 
@@ -149,7 +149,7 @@ public class Juego extends InterfaceJuego {
 					seMovio = false;
 				} else if (!barril.llegoTopeIzq(viga) && volverBarril) {
 					seMovio = true;
-					barril.moverse(-3);
+					barril.moverse(-2);
 					break;
 				}
 			}
@@ -166,7 +166,9 @@ public class Juego extends InterfaceJuego {
 	}
 
 	int alturaSalto = 0;
-	boolean saltando = true;
+	boolean saltando = false;
+	boolean saltandoArriba = true;
+
 	private void moverAgente() {
 		if (entorno.estaPresionada(entorno.TECLA_ARRIBA) || entorno.estaPresionada(entorno.TECLA_ABAJO)) {
 			for (Escalera escalera : escaleras) {
@@ -177,14 +179,34 @@ public class Juego extends InterfaceJuego {
 			agente.dibujarse(entorno);
 			return;
 		}
-		if (entorno.estaPresionada(entorno.TECLA_ESPACIO)) {
-			
+		if (entorno.sePresiono(entorno.TECLA_ESPACIO) || saltando) {
+			if (!saltando) {
+				saltando = true;
+			}
+
+			if (saltando && alturaSalto < 60 && saltandoArriba) {
+				agente.subir(-1);
+				alturaSalto += 1;
+				if (alturaSalto >= 60) {
+					saltandoArriba = false;
+				}
+			}
+			if (saltando && !saltandoArriba) {
+				agente.subir(1);
+				alturaSalto -= 1;
+				if (alturaSalto <= 0) {
+					saltandoArriba = true;
+					saltando = false;
+					alturaSalto = 0;
+				}
+			}
+			agente.dibujarse(entorno);
 		} else {
 			for (Viga viga : vigas) {
 				if (agente.verificarViga(viga)) {
 					agente.moverPorViga(entorno, viga);
 				}
-				ubicarYdibujarAgente();
+				if(!saltando) ubicarYdibujarAgente();
 			}
 		}
 	}

@@ -1,6 +1,5 @@
 package personajes;
 
-
 import java.awt.Color;
 import java.awt.Image;
 
@@ -49,7 +48,7 @@ public class Agente {
 
 	public void dibujarse(Entorno entorno) {
 		entorno.dibujarCirculo(this.x, this.y, Math.PI * 10, Color.green);
-//		entorno.dibujarImagen(img, x, y, 0);
+		// entorno.dibujarImagen(img, x, y, 0);
 	}
 
 	public void mover(int dx) {
@@ -99,7 +98,7 @@ public class Agente {
 	public boolean llegoTope(Escalera escalera) {
 		int yy = this.y - escalera.getY();
 		double disty = Math.sqrt(yy * yy);
-		return disty >= ((escalera.getAlto() / 2))+20;
+		return disty >= ((escalera.getAlto() / 2)) + 20;
 	}
 
 	public void moverPorEscalera(Entorno entorno, Escalera escalera) {
@@ -107,21 +106,6 @@ public class Agente {
 			this.subir(+3);
 
 		if (!llegoTope(escalera) && entorno.estaPresionada(entorno.TECLA_ARRIBA))
-			this.subir(-3);		
+			this.subir(-3);
 	}
-
-	boolean sube = true;
-	int altura = 0;
-	public void saltar() {
-		if(altura >= 30)
-			sube = false;
-		if(sube && altura < 30) {
-			this.y = this.y + 3;
-			altura += 3;
-		}
-		if(!sube) {
-			this.y = this.y - 3;
-		}
-	}
-
 }
