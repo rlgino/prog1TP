@@ -10,6 +10,8 @@
 
 package juego;
 
+import java.util.Random;
+
 // ...............................................................................................................................
 
 //
@@ -32,217 +34,227 @@ import personajes.Monkey;
 
 public class Juego extends InterfaceJuego {
 
-    private final int ALTO_FRAME  = 600;
-    private final int ANCHO_FRAME = 800;
-    private final int DISTANCIA_AGENTE = 50;
-    private final int ALTURA_MAX_SALTO = 60;
-    private final int CANT_VIGAS   = 5;//Incluyendo al piso
+	private final int ALTO_FRAME = 600;
+	public final static int ANCHO_FRAME = 800;
+	private final int DISTANCIA_AGENTE = 50;
+	private final int ALTURA_MAX_SALTO = 80;
+	private final int CANT_VIGAS = 5;// Incluyendo al piso
 
-    // Variables y métodos propios de cada grupo
-    // Personajes
-    Agente agente;
+	// Variables y métodos propios de cada grupo
+	// Personajes
+	Agente agente;
 
-    // Elementos
-    Barril     barril;
-    Escalera[] escaleras;
-    Monkey     monkey;
-    boolean    saltando       = false;
-    boolean    saltandoArriba = true;
-    Viga[]     vigas;
+	// Elementos
+	Barril[] barriles;
+	Escalera[] escaleras;
+	Monkey monkey;
+	boolean saltando = false;
+	boolean saltandoArriba = true;
+	Viga[] vigas;
 
-    boolean volver = true;
-    int alturaSalto = 0;
+	boolean volver = true;
+	int alturaSalto = 0;
 
-    boolean           volverBarril = false;
+	// El objeto Entorno que controla el tiempo y otros
+	private final Entorno entorno;
 
-    // El objeto Entorno que controla el tiempo y otros
-    private final Entorno entorno;
+	// Variables y métodos propios de cada grupo
+	// ...
 
-    //~ Constructors .................................................................................................................................
+	Juego() {
+		// Inicializa el objeto entorno
+		entorno = new Entorno(this, "Donkey kong - Gino Luraschi - V1.0", ANCHO_FRAME, ALTO_FRAME);
 
-    // Variables y métodos propios de cada grupo
-    // ...
+		// Inicializar lo que haga falta para el juego
+		// Iniciamos personajes
+		monkey = new Monkey(50, 50);
+		iniciarAgente();
 
-    Juego() {
-        // Inicializa el objeto entorno
-        entorno = new Entorno(this, "Donkey - Gino Luraschi - V0.01", ANCHO_FRAME, ALTO_FRAME);
+		// Iniciamos elementos
+		barriles = new Barril[5];
+		iniciarVigas();
+		iniciarEscaleras();
 
-        // Inicializar lo que haga falta para el juego
-        // Iniciamos personajes
-        monkey = new Monkey(50, 50);
-        iniciarAgente();
+		// Inicia el juego!
+		entorno.iniciar();
+	}
 
-        // Iniciamos elementos
-        iniciarVigas();
-        iniciarEscaleras();
+	/**
+	 * Durante el juego, el método tick() será ejecutado en cada instante y por lo
+	 * tanto es el método más importante de esta clase. Aquí se debe actualizar el
+	 * estado interno del juego para simular el paso del tiempo (ver el enunciado
+	 * del TP para mayor detalle).
+	 */
+	public void tick() {
+		// Procesamiento de un instante de tiempo
+		dibujarElementos();
+		moverPersonajes();
+		lanzarBarril();
+		moverBarril();
+		verificarAgenteBarril();
+	}
 
-        // Inicia el juego!
-        entorno.iniciar();
-    }
+	private void dibujarElementos() {
+		dibujarVigas();
+		dibujarEscaleras();
+	}
 
-    //~ Methods ......................................................................................................................................
+	private void dibujarEscaleras() {
+		for (final Escalera escalera : escaleras)
+			escalera.dibujarse(entorno);
+	}
 
-    /**
-     * Durante el juego, el método tick() será ejecutado en cada instante y por lo tanto es el
-     * método más importante de esta clase. Aquí se debe actualizar el estado interno del juego para
-     * simular el paso del tiempo (ver el enunciado del TP para mayor detalle).
-     */
-    public void tick() {
-        // Procesamiento de un instante de tiempo
-        dibujarElementos();
-        moverPersonajes();
-        lanzarBarril();
-        verificarAgenteBarril();
-    }
+	private void dibujarVigas() {
+		for (final Viga viga : vigas)
+			viga.dibujarse(entorno);
+	}
 
-    private void dibujarElementos() {
-        dibujarVigas();
-        dibujarEscaleras();
-    }
+	private void iniciarAgente() {
+		agente = new Agente(DISTANCIA_AGENTE, ALTO_FRAME - DISTANCIA_AGENTE);
+	}
 
-    private void dibujarEscaleras() {
-        for (final Escalera escalera : escaleras)
-            escalera.dibujarse(entorno);
-    }
+	private void iniciarEscaleras() {
+		escaleras = new Escalera[CANT_VIGAS - 1]; // Se tiene una escalera menos que vigas
+		for (int x = 0; x < escaleras.length; x++)
+			escaleras[x] = ubicarEscalera(vigas[x], vigas[x + 1]);
+	}
 
-    private void dibujarVigas() {
-        for (final Viga viga : vigas)
-            viga.dibujarse(entorno);
-    }
+	private void iniciarVigas() {
+		vigas = new Viga[5];
+		vigas[0] = new Viga(0, monkey.primeraViga());
+		for (int x = 1; x < vigas.length; x++) {
+			final int posX;
 
-    private void iniciarAgente() {
-        agente = new Agente(DISTANCIA_AGENTE, ALTO_FRAME - DISTANCIA_AGENTE);
-    }
+			if (vigas[x - 1].getIzq())
+				posX = ANCHO_FRAME - Viga.ANCHO_DEFAULT;
+			else
+				posX = 0;
 
-    private void iniciarEscaleras() {
-        escaleras = new Escalera[CANT_VIGAS - 1];  // Se tiene una escalera menos que que vigas
-        for (int x = 0; x < escaleras.length; x++)
-            escaleras[x] = ubicarEscalera(vigas[x], vigas[x + 1]);
-    }
+			final int y = vigas[x - 1].getY() + ALTO_FRAME / (CANT_VIGAS);
+			vigas[x] = new Viga(posX, y);
+		}
+		vigas[CANT_VIGAS - 1].setAncho(ANCHO_FRAME); // Se tomara el piso como ultimo
+	}
 
-    private void iniciarVigas() {
-        vigas    = new Viga[5];
-        vigas[0] = new Viga(0, monkey.primeraViga());
-        for (int x = 1; x < vigas.length; x++) {
-            final int posX;
+	int segundos = 0;
+	int proxBarril = 0;
 
-            if (vigas[x - 1].getIzq()) posX = ANCHO_FRAME - Viga.ANCHO_DEFAULT;
-            else posX = 0;
+	private void lanzarBarril() {
+		if (segundos == proxBarril) {
+			for (int y = 0; y < barriles.length; y++) {
+				if (barriles[y] == null) {
+					barriles[y] = monkey.lanzarBarril();
+					final Random generador = new Random();
+					proxBarril = 300 + generador.nextInt(3) * 100;
+					segundos = 0;
+					break;
+				}
+			}
+		}
+		segundos++;
+	}
 
-            final int y = vigas[x - 1].getY() + ALTO_FRAME / (CANT_VIGAS);
-            vigas[x] = new Viga(posX, y);
-        }
-        vigas[CANT_VIGAS - 1].setAncho(ANCHO_FRAME);  // Se tomara el piso
-    }
+	private void moverAgente() {
+		if (entorno.estaPresionada(entorno.TECLA_ARRIBA) || entorno.estaPresionada(entorno.TECLA_ABAJO)) {
+			for (final Escalera escalera : escaleras) {
+				if (agente.verificarEscalera(escalera))
+					agente.moverPorEscalera(entorno, escalera);
+			}
+			agente.dibujarse(entorno);
+			return;
+		}
+		if (entorno.sePresiono(entorno.TECLA_ESPACIO) || saltando) {
+			agenteSaltar();
+			agente.dibujarse(entorno);
+		} else {
+			for (final Viga viga : vigas) {
+				if (agente.verificarViga(viga))
+					agente.moverPorViga(entorno, viga);
+				if (!saltando)
+					ubicarYdibujarAgente();
+			}
+		}
+	}
 
-    private void lanzarBarril() {
-        if (barril == null) barril = monkey.lanzarBarril();
-        moverBarril();
-    }
+	private void agenteSaltar() {
+		if (!saltando)
+			saltando = true;
 
-    private void moverAgente() {
-        if (entorno.estaPresionada(entorno.TECLA_ARRIBA) || entorno.estaPresionada(entorno.TECLA_ABAJO)) {
-            for (final Escalera escalera : escaleras) {
-                if (agente.verificarEscalera(escalera)) agente.moverPorEscalera(entorno, escalera);
-            }
-            agente.dibujarse(entorno);
-            return;
-        }
-        if (entorno.sePresiono(entorno.TECLA_ESPACIO) || saltando) {
-            if (!saltando) saltando = true;
+		if (alturaSalto < ALTURA_MAX_SALTO && saltandoArriba) {
+			agente.subir(-3);
+			alturaSalto += 3;
+			if (alturaSalto >= ALTURA_MAX_SALTO)
+				saltandoArriba = false;
+		}
+		if (saltando && !saltandoArriba) {
+			agente.subir(3);
+			alturaSalto -= 3;
+			if (alturaSalto <= 0) {
+				saltandoArriba = true;
+				saltando = false;
+				alturaSalto = 0;
+			}
+		}
+		if (entorno.estaPresionada(entorno.TECLA_DERECHA))
+			agente.mover(3);
+		if (entorno.estaPresionada(entorno.TECLA_IZQUIERDA))
+			agente.mover(-3);
+	}
 
-            if (alturaSalto < ALTURA_MAX_SALTO && saltandoArriba) {
-                agente.subir(-1);
-                alturaSalto += 1;
-                if (alturaSalto >= ALTURA_MAX_SALTO) saltandoArriba = false;
-            }
-            if (saltando && !saltandoArriba) {
-                agente.subir(1);
-                alturaSalto -= 1;
-                if (alturaSalto <= 0) {
-                    saltandoArriba = true;
-                    saltando       = false;
-                    alturaSalto    = 0;
-                }
-            }
-            agente.dibujarse(entorno);
-        }
-        else {
-            for (final Viga viga : vigas) {
-                if (agente.verificarViga(viga)) agente.moverPorViga(entorno, viga);
-                if (!saltando) ubicarYdibujarAgente();
-            }
-        }
-    }
+	private void moverBarril() {
+		for (int x = 0; x < barriles.length; x++) {
+			if (barriles[x] != null) {
+				barriles[x] = barriles[x].moverse(vigas, entorno);
+				if (barriles[x] == null)
+					segundos = 0;
+			}
+		}
+	}
 
-    private void moverBarril() {
-        boolean seMovio = false;
-        for (final Viga viga : vigas) {
-            if (barril.verificarViga(viga)) {
-                // Tope derecho de viga
-                if (barril.llegoTopeDer(viga) && barril.tocoCostado(ANCHO_FRAME) && !volverBarril) volverBarril = true;
-                else if (barril.llegoTopeDer(viga)) seMovio = false;
-                else if (!barril.llegoTopeDer(viga) && !volverBarril) {
-                    seMovio = true;
-                    barril.moverse(2);
-                    break;
-                }
+	private void moverMonkey() {
+		if (monkey.llegoTope(vigas[0]))
+			volver = !volver;
+		if (volver) // muevo a la izq
+			monkey.mover(-2);
+		else // Muevo a la derecha
+			monkey.mover(+2);
 
-                // Tope izquierdo de viga
-                if (barril.llegoTopeIzq(viga) && barril.tocoCostado(0) && volverBarril) volverBarril = false;
-                else if (barril.llegoTopeIzq(viga)) seMovio = false;
-				else if (!barril.llegoTopeIzq(viga) && volverBarril) {
-                    seMovio = true;
-                    barril.moverse(-2);
-                    break;
-                }
-            }
-        }
-        if (!seMovio) barril.bajar();
-        barril.dibujarse(entorno);
-    }
+		monkey.dibujarse(entorno);
+	}
 
-    private void moverMonkey() {
-        if (monkey.llegoTope(vigas[0])) volver = !volver;
-        if (volver)  // muevo a la izq
-            monkey.mover(-2);
-        else         // Muevo a la derecha
-            monkey.mover(+2);
+	private void moverPersonajes() {
+		moverMonkey();
+		moverAgente();
+	}
 
-        monkey.dibujarse(entorno);
-    }
+	private Escalera ubicarEscalera(Viga viga, Viga viga2) {
+		if (viga.getIzq()) {
+			final int x = viga.getX() + viga.getAncho();
+			return new Escalera(x, viga.getY(), viga2.getY() - viga.getY());
+		}
+		final int x = viga.getX();
+		return new Escalera(x, viga.getY(), viga2.getY() - viga.getY());
+	}
 
-    private void moverPersonajes()
-    {
-        moverMonkey();
-        moverAgente();
-    }
+	private void ubicarYdibujarAgente() {
+		for (final Viga viga : vigas) {
+			if (agente.verificarViga(viga))
+				agente.setY(viga.getY() - 15);
+		}
+		agente.dibujarse(entorno);
+	}
 
-    private Escalera ubicarEscalera(Viga viga, Viga viga2) {
-        if (viga.getIzq()) {
-            final int x = viga.getX() + viga.getAncho();
-            return new Escalera(x, viga.getY(), viga2.getY() - viga.getY());
-        }
-        final int x = viga.getX();
-        return new Escalera(x, viga.getY(), viga2.getY() - viga.getY());
-    }
+	private void verificarAgenteBarril() {
+		for (Barril barril : barriles) {
+			if (barril != null && agente.lePega(barril)) {
+				iniciarAgente();
+				barril = null;
+			}
+		}
+	}
 
-    private void ubicarYdibujarAgente() {
-        for (final Viga viga : vigas) {
-            if (agente.verificarViga(viga)) agente.setY(viga.getY() - 15);
-        }
-        agente.dibujarse(entorno);
-    }
-
-    private void verificarAgenteBarril() {
-        if (agente.lePega(barril)) {
-            iniciarAgente();
-            barril = null;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static void main(String[] args) {
-        final Juego juego = new Juego();
-    }
-}  // end class Juego
+	@SuppressWarnings("unused")
+	public static void main(String[] args) {
+		final Juego juego = new Juego();
+	}
+}

@@ -1,20 +1,17 @@
 package personajes;
 
 import java.awt.Color;
-import java.awt.Image;
 
 import elementos.Barril;
 import elementos.Escalera;
 import elementos.Viga;
 import entorno.Entorno;
-import entorno.Herramientas;
 
 public class Agente {
 	// Variables de instancia
 	private int x;
 	private int y;
 	private int tam = 50;
-	private Image img;
 
 	public int getX() {
 		return x;
@@ -43,7 +40,6 @@ public class Agente {
 	public Agente(int x, int y) {
 		this.x = x;
 		this.y = y;
-		this.img = Herramientas.cargarImagen("agente.png");
 	}
 
 	public void dibujarse(Entorno entorno) {

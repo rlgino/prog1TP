@@ -3,6 +3,7 @@ package elementos;
 import java.awt.Color;
 
 import entorno.Entorno;
+import juego.Juego;
 
 public class Barril {
 	// Variables de instancia
@@ -53,6 +54,45 @@ public class Barril {
 		int xx = this.x - anchoFrame;
 		double dist = Math.sqrt(xx * xx);
 		return dist <= this.tam * 3;
+	}
+
+	boolean volverBarril = false;
+
+	public Barril moverse(Viga[] vigas, Entorno entorno) {
+		boolean seMovio = false;
+		for (final Viga viga : vigas) {
+			if (this.verificarViga(viga)) {
+				if (vigas[vigas.length - 1] == viga && (llegoTopeDer(viga) || llegoTopeIzq(viga)))
+					return null;
+
+				// Tope derecho de viga
+				if (this.llegoTopeDer(viga) && this.tocoCostado(Juego.ANCHO_FRAME) && !volverBarril)
+					volverBarril = true;
+				else if (this.llegoTopeDer(viga))
+					seMovio = false;
+				else if (!this.llegoTopeDer(viga) && !volverBarril) {
+					seMovio = true;
+					this.moverse(2);
+					break;
+				}
+
+				// Tope izquierdo de viga
+				if (this.llegoTopeIzq(viga) && this.tocoCostado(0) && volverBarril)
+					volverBarril = false;
+				else if (this.llegoTopeIzq(viga))
+					seMovio = false;
+				else if (!this.llegoTopeIzq(viga) && volverBarril) {
+					seMovio = true;
+					this.moverse(-2);
+					break;
+				}
+			}
+		}
+		if (!seMovio)
+			this.bajar();
+
+		this.dibujarse(entorno);
+		return this;
 	}
 
 }
