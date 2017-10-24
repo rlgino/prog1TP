@@ -32,13 +32,15 @@ import personajes.Monkey;
 
 public class Juego extends InterfaceJuego {
 
-    //~ Instance Fields ..............................................................................................................................
+    private final int ALTO_FRAME  = 600;
+    private final int ANCHO_FRAME = 800;
+    private final int DISTANCIA_AGENTE = 50;
+    private final int ALTURA_MAX_SALTO = 60;
+    private final int CANT_VIGAS   = 5;//Incluyendo al piso
 
     // Variables y métodos propios de cada grupo
     // Personajes
     Agente agente;
-
-    int alturaSalto = 0;
 
     // Elementos
     Barril     barril;
@@ -49,9 +51,9 @@ public class Juego extends InterfaceJuego {
     Viga[]     vigas;
 
     boolean volver = true;
+    int alturaSalto = 0;
 
     boolean           volverBarril = false;
-    private final int CANT_VIGAS   = 5;
 
     // El objeto Entorno que controla el tiempo y otros
     private final Entorno entorno;
@@ -109,7 +111,7 @@ public class Juego extends InterfaceJuego {
     }
 
     private void iniciarAgente() {
-        agente = new Agente(50, ALTO_FRAME - 50);
+        agente = new Agente(DISTANCIA_AGENTE, ALTO_FRAME - DISTANCIA_AGENTE);
     }
 
     private void iniciarEscaleras() {
@@ -149,10 +151,10 @@ public class Juego extends InterfaceJuego {
         if (entorno.sePresiono(entorno.TECLA_ESPACIO) || saltando) {
             if (!saltando) saltando = true;
 
-            if (alturaSalto < 60 && saltandoArriba) {
+            if (alturaSalto < ALTURA_MAX_SALTO && saltandoArriba) {
                 agente.subir(-1);
                 alturaSalto += 1;
-                if (alturaSalto >= 60) saltandoArriba = false;
+                if (alturaSalto >= ALTURA_MAX_SALTO) saltandoArriba = false;
             }
             if (saltando && !saltandoArriba) {
                 agente.subir(1);
@@ -189,7 +191,7 @@ public class Juego extends InterfaceJuego {
                 // Tope izquierdo de viga
                 if (barril.llegoTopeIzq(viga) && barril.tocoCostado(0) && volverBarril) volverBarril = false;
                 else if (barril.llegoTopeIzq(viga)) seMovio = false;
-                else if (!barril.llegoTopeIzq(viga) && volverBarril) {
+				else if (!barril.llegoTopeIzq(viga) && volverBarril) {
                     seMovio = true;
                     barril.moverse(-2);
                     break;
@@ -239,15 +241,8 @@ public class Juego extends InterfaceJuego {
         }
     }
 
-    //~ Methods ......................................................................................................................................
-
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         final Juego juego = new Juego();
     }
-
-    //~ Static Fields ................................................................................................................................
-
-    private static final int ALTO_FRAME  = 600;
-    private static final int ANCHO_FRAME = 800;
 }  // end class Juego
