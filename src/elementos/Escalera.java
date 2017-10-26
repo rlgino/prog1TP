@@ -36,10 +36,6 @@ public class Escalera {
 		entorno.dibujarImagen(img, x, y, 0);
 	}
 
-	public boolean getIzq() {
-		return x - (int) ancho / 2 == 0;
-	}
-
 	public int getAncho() {
 		return (int) ancho;
 	}

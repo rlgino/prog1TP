@@ -6,7 +6,7 @@ import elementos.Barril;
 import elementos.Viga;
 import entorno.Entorno;
 
-public class Monkey {
+public class Monkey implements Personaje {
 	private int x;
 	private int y;
 	private int altura;
@@ -15,6 +15,22 @@ public class Monkey {
 		this.x = x;
 		this.y = y;
 		this.altura = 60;
+	}
+
+	public int getX() {
+		return x;
+	}
+
+	public void setX(int x) {
+		this.x = x;
+	}
+
+	public void setY(int y) {
+		this.y = y;
+	}
+
+	public int getY() {
+		return y;
 	}
 
 	public void dibujarse(Entorno entorno) {
@@ -41,12 +57,19 @@ public class Monkey {
 		return x == 500 || x == 50;
 	}
 
-	public int getY() {
-		return y;
-	}
-
 	public int primeraViga() {
 		return y + altura / 2;
+	}
+
+	boolean volver = true;
+
+	public void moverMonkey(Viga viga) {
+		if (this.llegoTope(viga))
+			volver = !volver;
+		if (volver) // muevo a la izq
+			this.mover(-2);
+		else // Muevo a la derecha
+			this.mover(+2);
 	}
 
 }

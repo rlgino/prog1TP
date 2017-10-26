@@ -37,8 +37,10 @@ public class Juego extends InterfaceJuego {
 	private final int ALTO_FRAME = 600;
 	public final static int ANCHO_FRAME = 800;
 	private final int DISTANCIA_AGENTE = 50;
-	private final int ALTURA_MAX_SALTO = 80;
 	private final int CANT_VIGAS = 5;// Incluyendo al piso
+
+	// El objeto Entorno que controla el tiempo y otros
+	private final Entorno entorno;
 
 	// Variables y métodos propios de cada grupo
 	// Personajes
@@ -48,15 +50,7 @@ public class Juego extends InterfaceJuego {
 	Barril[] barriles;
 	Escalera[] escaleras;
 	Monkey monkey;
-	boolean saltando = false;
-	boolean saltandoArriba = true;
 	Viga[] vigas;
-
-	boolean volver = true;
-	int alturaSalto = 0;
-
-	// El objeto Entorno que controla el tiempo y otros
-	private final Entorno entorno;
 
 	// Variables y métodos propios de cada grupo
 	// ...
@@ -79,48 +73,18 @@ public class Juego extends InterfaceJuego {
 		entorno.iniciar();
 	}
 
-	/**
-	 * Durante el juego, el método tick() será ejecutado en cada instante y por lo
-	 * tanto es el método más importante de esta clase. Aquí se debe actualizar el
-	 * estado interno del juego para simular el paso del tiempo (ver el enunciado
-	 * del TP para mayor detalle).
-	 */
-	public void tick() {
-		// Procesamiento de un instante de tiempo
-		dibujarElementos();
-		moverPersonajes();
-		lanzarBarril();
-		moverBarril();
-		verificarAgenteBarril();
-	}
-
-	private void dibujarElementos() {
-		dibujarVigas();
-		dibujarEscaleras();
-	}
-
-	private void dibujarEscaleras() {
-		for (final Escalera escalera : escaleras)
-			escalera.dibujarse(entorno);
-	}
-
-	private void dibujarVigas() {
-		for (final Viga viga : vigas)
-			viga.dibujarse(entorno);
-	}
-
-	private void iniciarAgente() {
-		agente = new Agente(DISTANCIA_AGENTE, ALTO_FRAME - DISTANCIA_AGENTE);
-	}
-
 	private void iniciarEscaleras() {
 		escaleras = new Escalera[CANT_VIGAS - 1]; // Se tiene una escalera menos que vigas
 		for (int x = 0; x < escaleras.length; x++)
 			escaleras[x] = ubicarEscalera(vigas[x], vigas[x + 1]);
 	}
 
+	private void iniciarAgente() {
+		agente = new Agente(DISTANCIA_AGENTE, ALTO_FRAME - DISTANCIA_AGENTE);
+	}
+
 	private void iniciarVigas() {
-		vigas = new Viga[5];
+		vigas = new Viga[CANT_VIGAS];
 		vigas[0] = new Viga(0, monkey.primeraViga());
 		for (int x = 1; x < vigas.length; x++) {
 			final int posX;
@@ -134,6 +98,39 @@ public class Juego extends InterfaceJuego {
 			vigas[x] = new Viga(posX, y);
 		}
 		vigas[CANT_VIGAS - 1].setAncho(ANCHO_FRAME); // Se tomara el piso como ultimo
+	}
+
+	/**
+	 * Durante el juego, el método tick() será ejecutado en cada instante y por lo
+	 * tanto es el método más importante de esta clase. Aquí se debe actualizar el
+	 * estado interno del juego para simular el paso del tiempo (ver el enunciado
+	 * del TP para mayor detalle).
+	 */
+	public void tick() {
+		// Procesamiento de un instante de tiempo
+		moverPersonajes();
+		lanzarBarril();
+		moverBarril();
+		verificarAgenteBarril();
+		dibujarElementos();
+		verificarMonkeyAgente();
+	}
+
+	private void dibujarElementos() {
+		dibujarVigas();
+		dibujarEscaleras();
+		agente.dibujarse(entorno);
+		monkey.dibujarse(entorno);
+	}
+
+	private void dibujarVigas() {
+		for (final Viga viga : vigas)
+			viga.dibujarse(entorno);
+	}
+
+	private void dibujarEscaleras() {
+		for (final Escalera escalera : escaleras)
+			escalera.dibujarse(entorno);
 	}
 
 	int segundos = 0;
@@ -154,51 +151,35 @@ public class Juego extends InterfaceJuego {
 		segundos++;
 	}
 
+	private void moverPersonajes() {
+		monkey.moverMonkey(vigas[0]);
+		moverAgente();
+	}
+
 	private void moverAgente() {
 		if (entorno.estaPresionada(entorno.TECLA_ARRIBA) || entorno.estaPresionada(entorno.TECLA_ABAJO)) {
 			for (final Escalera escalera : escaleras) {
 				if (agente.verificarEscalera(escalera))
 					agente.moverPorEscalera(entorno, escalera);
 			}
-			agente.dibujarse(entorno);
 			return;
 		}
-		if (entorno.sePresiono(entorno.TECLA_ESPACIO) || saltando) {
-			agenteSaltar();
-			agente.dibujarse(entorno);
+		if (entorno.sePresiono(entorno.TECLA_ESPACIO) || agente.saltando) {
+			agente.agenteSaltar(entorno);
+
+			if (entorno.estaPresionada(entorno.TECLA_DERECHA))
+				agente.mover(3);
+			if (entorno.estaPresionada(entorno.TECLA_IZQUIERDA))
+				agente.mover(-3);
 		} else {
 			for (final Viga viga : vigas) {
 				if (agente.verificarViga(viga))
 					agente.moverPorViga(entorno, viga);
-				if (!saltando)
-					ubicarYdibujarAgente();
+				if (!agente.saltando)
+					ubicarAgente();
 			}
 		}
-	}
 
-	private void agenteSaltar() {
-		if (!saltando)
-			saltando = true;
-
-		if (alturaSalto < ALTURA_MAX_SALTO && saltandoArriba) {
-			agente.subir(-3);
-			alturaSalto += 3;
-			if (alturaSalto >= ALTURA_MAX_SALTO)
-				saltandoArriba = false;
-		}
-		if (saltando && !saltandoArriba) {
-			agente.subir(3);
-			alturaSalto -= 3;
-			if (alturaSalto <= 0) {
-				saltandoArriba = true;
-				saltando = false;
-				alturaSalto = 0;
-			}
-		}
-		if (entorno.estaPresionada(entorno.TECLA_DERECHA))
-			agente.mover(3);
-		if (entorno.estaPresionada(entorno.TECLA_IZQUIERDA))
-			agente.mover(-3);
 	}
 
 	private void moverBarril() {
@@ -211,22 +192,6 @@ public class Juego extends InterfaceJuego {
 		}
 	}
 
-	private void moverMonkey() {
-		if (monkey.llegoTope(vigas[0]))
-			volver = !volver;
-		if (volver) // muevo a la izq
-			monkey.mover(-2);
-		else // Muevo a la derecha
-			monkey.mover(+2);
-
-		monkey.dibujarse(entorno);
-	}
-
-	private void moverPersonajes() {
-		moverMonkey();
-		moverAgente();
-	}
-
 	private Escalera ubicarEscalera(Viga viga, Viga viga2) {
 		if (viga.getIzq()) {
 			final int x = viga.getX() + viga.getAncho();
@@ -236,12 +201,11 @@ public class Juego extends InterfaceJuego {
 		return new Escalera(x, viga.getY(), viga2.getY() - viga.getY());
 	}
 
-	private void ubicarYdibujarAgente() {
+	private void ubicarAgente() {
 		for (final Viga viga : vigas) {
 			if (agente.verificarViga(viga))
 				agente.setY(viga.getY() - 15);
 		}
-		agente.dibujarse(entorno);
 	}
 
 	private void verificarAgenteBarril() {
@@ -251,6 +215,11 @@ public class Juego extends InterfaceJuego {
 				barril = null;
 			}
 		}
+	}
+
+	private void verificarMonkeyAgente() {
+		if (agente.verificarViga(monkey))
+			System.out.println("Ganaste");
 	}
 
 	@SuppressWarnings("unused")

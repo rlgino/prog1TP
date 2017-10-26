@@ -7,7 +7,7 @@ import elementos.Escalera;
 import elementos.Viga;
 import entorno.Entorno;
 
-public class Agente {
+public class Agente implements Personaje{
 	// Variables de instancia
 	private int x;
 	private int y;
@@ -44,7 +44,6 @@ public class Agente {
 
 	public void dibujarse(Entorno entorno) {
 		entorno.dibujarCirculo(this.x, this.y, Math.PI * 10, Color.green);
-		// entorno.dibujarImagen(img, x, y, 0);
 	}
 
 	public void mover(int dx) {
@@ -103,5 +102,39 @@ public class Agente {
 
 		if (!llegoTope(escalera) && entorno.estaPresionada(entorno.TECLA_ARRIBA))
 			this.subir(-3);
+	}
+
+	private final int ALTURA_MAX_SALTO = 80;
+	private boolean saltandoArriba = true;
+	private int alturaSalto = 0;
+	public boolean saltando = false;
+
+	public void agenteSaltar(Entorno entorno) {
+		if (!saltando)
+			saltando = true;
+
+		if (alturaSalto < ALTURA_MAX_SALTO && saltandoArriba) {
+			this.subir(-3);
+			alturaSalto += 3;
+			if (alturaSalto >= ALTURA_MAX_SALTO)
+				saltandoArriba = false;
+		}
+		if (saltando && !saltandoArriba) {
+			this.subir(3);
+			alturaSalto -= 3;
+			if (alturaSalto <= 0) {
+				saltandoArriba = true;
+				saltando = false;
+				alturaSalto = 0;
+			}
+		}
+	}
+
+	public boolean verificarViga(Monkey monkey) {
+		int xx = this.x - monkey.getX();
+		int yy = this.y - monkey.getY();
+		double dist = Math.sqrt(xx * xx + yy * yy);
+
+		return dist <= this.tam / 2;
 	}
 }
